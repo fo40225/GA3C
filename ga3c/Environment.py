@@ -28,7 +28,7 @@ import sys
 from collections import deque
 
 import numpy as np
-import scipy.misc as misc
+import cv2
 
 from Config import Config
 from GameManager import GameManager
@@ -46,13 +46,9 @@ class Environment:
         self.reset()
 
     @staticmethod
-    def _rgb2gray(rgb):
-        return np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
-
-    @staticmethod
     def _preprocess(image):
-        image = Environment._rgb2gray(image)
-        image = misc.imresize(image, [Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH], 'bilinear')
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        image = cv2.resize(image, (Config.IMAGE_HEIGHT,Config.IMAGE_WIDTH), interpolation=cv2.INTER_AREA)
         image = image.astype(np.float32) / 128.0 - 1.0
         return image
 
