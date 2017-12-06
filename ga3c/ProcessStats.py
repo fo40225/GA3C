@@ -25,10 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-if sys.version_info >= (3,0):
-    from queue import Queue as queueQueue
-else:
-    from Queue import Queue as queueQueue
+from collections import deque
 
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
@@ -63,7 +60,7 @@ class ProcessStats(Process):
         with open(Config.RESULTS_FILENAME, 'a') as results_logger:
             rolling_frame_count = 0
             rolling_reward = 0
-            results_q = queueQueue(maxsize=Config.STAT_ROLLING_MEAN_WINDOW)
+            results_q = deque(maxlen=Config.STAT_ROLLING_MEAN_WINDOW)
             
             self.start_time = time.time()
             first_time = datetime.now()
@@ -78,13 +75,13 @@ class ProcessStats(Process):
                 rolling_frame_count += length
                 rolling_reward += reward
 
-                if results_q.full():
-                    old_episode_time, old_reward, old_length = results_q.get()
+                if len(results_q) == Config.STAT_ROLLING_MEAN_WINDOW:
+                    old_episode_time, old_reward, old_length = results_q.popleft()
                     rolling_frame_count -= old_length
                     rolling_reward -= old_reward
                     first_time = old_episode_time
 
-                results_q.put((episode_time, reward, length))
+                results_q.append((episode_time, reward, length))
 
                 if self.episode_count.value % Config.SAVE_FREQUENCY == 0:
                     self.should_save_model.value = 1
@@ -98,7 +95,7 @@ class ProcessStats(Process):
                         '[NT: %2d NP: %2d NA: %2d]'
                         % (int(time.time()-self.start_time),
                            self.episode_count.value, reward,
-                           rolling_reward / results_q.qsize(),
+                           rolling_reward / len(results_q),
                            rolling_frame_count / (datetime.now() - first_time).total_seconds(),
                            self.FPS(), self.TPS(),
                            self.trainer_count.value, self.predictor_count.value, self.agent_count.value))

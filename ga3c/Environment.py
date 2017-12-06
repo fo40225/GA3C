@@ -25,10 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-if sys.version_info >= (3,0):
-    from queue import Queue
-else:
-    from Queue import Queue
+from collections import deque
 
 import numpy as np
 import scipy.misc as misc
@@ -41,7 +38,7 @@ class Environment:
     def __init__(self):
         self.game = GameManager(Config.ATARI_GAME, display=Config.PLAY_MODE)
         self.nb_frames = Config.STACKED_FRAMES
-        self.frame_q = Queue(maxsize=self.nb_frames)
+        self.frame_q = deque(maxlen=self.nb_frames)
         self.previous_state = None
         self.current_state = None
         self.total_reward = 0
@@ -60,24 +57,22 @@ class Environment:
         return image
 
     def _get_current_state(self):
-        if not self.frame_q.full():
+        if len(self.frame_q) < self.nb_frames:
             return None  # frame queue is not full yet.
-        x_ = np.array(self.frame_q.queue)
+        x_ = np.array(self.frame_q)
         x_ = np.transpose(x_, [1, 2, 0])  # move channels
         return x_
 
     def _update_frame_q(self, frame):
-        if self.frame_q.full():
-            self.frame_q.get()
         image = Environment._preprocess(frame)
-        self.frame_q.put(image)
+        self.frame_q.append(image)
 
     def get_num_actions(self):
         return self.game.env.action_space.n
 
     def reset(self):
         self.total_reward = 0
-        self.frame_q.queue.clear()
+        self.frame_q.clear()
         self._update_frame_q(self.game.reset())
         self.previous_state = self.current_state = None
 

@@ -35,25 +35,29 @@ import gym
 from Config import Config
 from Server import Server
 
-# Parse arguments
-for i in range(1, len(sys.argv)):
-    # Config arguments should be in format of Config=Value
-    # For setting booleans to False use Config=
-    x, y = sys.argv[i].split('=')
-    setattr(Config, x, type(getattr(Config, x))(y))
+def main():
+    # Parse arguments
+    for i in range(1, len(sys.argv)):
+        # Config arguments should be in format of Config=Value
+        # For setting booleans to False use Config=
+        x, y = sys.argv[i].split('=')
+        setattr(Config, x, type(getattr(Config, x))(y))
 
-# Adjust configs for Play mode
-if Config.PLAY_MODE:
-    Config.AGENTS = 1
-    Config.PREDICTORS = 1
-    Config.TRAINERS = 1
-    Config.DYNAMIC_SETTINGS = False
+    # Adjust configs for Play mode
+    if Config.PLAY_MODE:
+        Config.AGENTS = 1
+        Config.PREDICTORS = 1
+        Config.TRAINERS = 1
+        Config.DYNAMIC_SETTINGS = False
 
-    Config.LOAD_CHECKPOINT = True
-    Config.TRAIN_MODELS = False
-    Config.SAVE_MODELS = False
+        Config.LOAD_CHECKPOINT = True
+        Config.TRAIN_MODELS = False
+        Config.SAVE_MODELS = False
 
-gym.undo_logger_setup()
+    gym.undo_logger_setup()
 
-# Start main program
-Server().main()
+    # Start main program
+    Server().main()
+
+if __name__ == '__main__':
+    main()
